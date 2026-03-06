@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,78 +20,36 @@ import {
   Loader2,
   Clock,
   ArrowLeft,
+  RefreshCw,
+  FileText,
 } from "lucide-react";
 
 type TaskStatus = "done" | "running" | "pending";
+type TaskType = "code" | "tweet" | "email" | "summary" | "report";
 
 interface Task {
   id: string;
-  type: "code" | "tweet" | "email" | "summary";
+  type: TaskType;
   title: string;
   status: TaskStatus;
-  time: string;
-  output?: string;
+  time_label: string;
+  output?: string | null;
 }
 
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    type: "code",
-    title: "Fix authentication redirect bug in /api/auth/callback",
-    status: "done",
-    time: "2 min ago",
-    output: "PR #47 created — merged to main",
-  },
-  {
-    id: "2",
-    type: "tweet",
-    title: "Post product update thread about new dashboard features",
-    status: "done",
-    time: "15 min ago",
-    output: "Posted 4-tweet thread — 23 impressions so far",
-  },
-  {
-    id: "3",
-    type: "email",
-    title: "Send cold outreach batch to 25 SaaS founders",
-    status: "running",
-    time: "Just now",
-  },
-  {
-    id: "4",
-    type: "code",
-    title: "Add rate limiting to public API endpoints",
-    status: "running",
-    time: "Just now",
-  },
-  {
-    id: "5",
-    type: "summary",
-    title: "Generate daily metrics summary report",
-    status: "pending",
-    time: "Scheduled 6:00 PM",
-  },
-  {
-    id: "6",
-    type: "tweet",
-    title: "Engage with 10 relevant tweets in #buildinpublic",
-    status: "pending",
-    time: "Scheduled 7:00 PM",
-  },
-];
-
-const typeIcons = {
+const typeIcons: Record<TaskType, typeof Code> = {
   code: Code,
   tweet: Send,
   email: Mail,
   summary: BarChart3,
+  report: FileText,
 };
 
-const typeLabels = {
+const typeLabels: Record<TaskType, string> = {
   code: "Code",
   tweet: "Tweet",
   email: "Email",
   summary: "Report",
+  report: "Report",
 };
 
 const statusConfig: Record<
@@ -107,8 +66,8 @@ const statusConfig: Record<
 };
 
 function TaskRow({ task }: { task: Task }) {
-  const TypeIcon = typeIcons[task.type];
-  const status = statusConfig[task.status];
+  const TypeIcon = typeIcons[task.type] ?? Code;
+  const status = statusConfig[task.status] ?? statusConfig.pending;
   const StatusIcon = status.icon;
 
   return (
@@ -119,9 +78,9 @@ function TaskRow({ task }: { task: Task }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <Badge variant="outline" className="text-xs font-normal">
-            {typeLabels[task.type]}
+            {typeLabels[task.type] ?? task.type}
           </Badge>
-          <span className="text-xs text-muted-foreground">{task.time}</span>
+          <span className="text-xs text-muted-foreground">{task.time_label}</span>
         </div>
         <p className="text-sm font-medium leading-snug">{task.title}</p>
         {task.output && (
@@ -137,8 +96,31 @@ function TaskRow({ task }: { task: Task }) {
 }
 
 export default function Dashboard() {
-  const doneTasks = mockTasks.filter((t) => t.status === "done").length;
-  const runningTasks = mockTasks.filter((t) => t.status === "running").length;
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tasks");
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data);
+      }
+    } catch {
+      // silently handle fetch errors
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTasks();
+    const interval = setInterval(fetchTasks, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchTasks]);
+
+  const doneTasks = tasks.filter((t) => t.status === "done").length;
+  const runningTasks = tasks.filter((t) => t.status === "running").length;
 
   return (
     <div className="min-h-screen">
@@ -207,18 +189,41 @@ export default function Dashboard() {
         </Card>
 
         {/* Task Feed */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-1">Activity Feed</h2>
-          <p className="text-sm text-muted-foreground">
-            Live view of what Noxio is doing for your company
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold mb-1">Activity Feed</h2>
+            <p className="text-sm text-muted-foreground">
+              Live view of what Noxio is doing for your company
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setLoading(true);
+              fetchTasks();
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
 
-        <div className="space-y-3">
-          {mockTasks.map((task) => (
-            <TaskRow key={task.id} task={task} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            No tasks yet — Noxio is warming up.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {tasks.map((task) => (
+              <TaskRow key={task.id} task={task} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

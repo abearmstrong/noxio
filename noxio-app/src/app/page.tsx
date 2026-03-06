@@ -19,7 +19,6 @@ import {
   Server,
   Shield,
   Check,
-  X,
   ArrowRight,
   Zap,
 } from "lucide-react";
@@ -192,59 +191,32 @@ function Features() {
   );
 }
 
-function Comparison() {
-  const rows = [
-    { feature: "Custom domain", noxio: true, polsia: false },
-    { feature: "Existing codebase", noxio: true, polsia: false },
-    { feature: "GitHub integration", noxio: true, polsia: false },
-    { feature: "Niche expertise", noxio: true, polsia: false },
-    { feature: "Private dashboard", noxio: true, polsia: false },
-    { feature: "Price", noxio: "$49/mo", polsia: "$49/mo" },
+function WhyNoxio() {
+  const stats = [
+    { value: "100%", label: "Autonomous" },
+    { value: "Ships code", label: "Not tickets" },
+    { value: "24/7", label: "Uptime" },
   ];
 
   return (
     <section className="py-20 px-6">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12">
-          Noxio vs. the competition
+          Why Noxio
         </h2>
-        <div className="rounded-lg border border-border overflow-hidden">
-          <div className="grid grid-cols-3 bg-secondary/80 px-6 py-4 font-medium text-sm">
-            <span>Feature</span>
-            <span className="text-center">Noxio</span>
-            <span className="text-center text-muted-foreground">Polsia</span>
-          </div>
-          {rows.map((row) => (
-            <div
-              key={row.feature}
-              className="grid grid-cols-3 px-6 py-4 border-t border-border/50 text-sm"
-            >
-              <span className="text-muted-foreground">{row.feature}</span>
-              <span className="text-center">
-                {typeof row.noxio === "boolean" ? (
-                  row.noxio ? (
-                    <Check className="h-5 w-5 text-green-400 mx-auto" />
-                  ) : (
-                    <X className="h-5 w-5 text-red-400 mx-auto" />
-                  )
-                ) : (
-                  row.noxio
-                )}
-              </span>
-              <span className="text-center">
-                {typeof row.polsia === "boolean" ? (
-                  row.polsia ? (
-                    <Check className="h-5 w-5 text-green-400 mx-auto" />
-                  ) : (
-                    <X className="h-5 w-5 text-red-400 mx-auto" />
-                  )
-                ) : (
-                  <span className="text-muted-foreground">{row.polsia}</span>
-                )}
-              </span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+          {stats.map((stat) => (
+            <div key={stat.label}>
+              <p className="text-4xl font-bold mb-2">{stat.value}</p>
+              <p className="text-muted-foreground">{stat.label}</p>
             </div>
           ))}
         </div>
+        <p className="text-center mt-10">
+          <a href="/compare" className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors">
+            See how Noxio compares to the competition
+          </a>
+        </p>
       </div>
     </section>
   );
@@ -328,7 +300,7 @@ export default function Home() {
       <Navbar />
       <Hero />
       <Features />
-      <Comparison />
+      <WhyNoxio />
       <Pricing />
       <Footer />
     </main>
