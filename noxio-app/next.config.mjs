@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  trailingSlash: true,
+  // Server mode — supports API routes and SSR
   images: {
     unoptimized: true
   }
